@@ -1,0 +1,186 @@
+<%- include('layout', { title: 'Leaderboard' }) %>
+
+<div class="bg-white shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+        <!-- Filters -->
+        <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Game Mode</label>
+                <select id="gameModeFilter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="">All</option>
+                    <% gameModes.forEach(mode => { %>
+                        <option value="<%= mode.id %>"><%= mode.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Time Period</label>
+                <select id="periodFilter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="all">All Time</option>
+                    <option value="month">This Month</option>
+                    <option value="week">This Week</option>
+                    <option value="day">Today</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Sort By</label>
+                <select id="sortFilter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="rating">Rating</option>
+                    <option value="wins">Wins</option>
+                    <option value="matches">Matches Played</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Leaderboard Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wins</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Losses</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Win Rate</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Leaderboard data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4 flex items-center justify-between">
+            <div class="flex-1 flex justify-between sm:hidden">
+                <button onclick="previousPage()" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Previous
+                </button>
+                <button onclick="nextPage()" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Next
+                </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing <span class="font-medium" id="startRange"></span> to <span class="font-medium" id="endRange"></span> of 
+                        <span class="font-medium" id="totalPlayers"></span> players
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination" id="pagination">
+                        <!-- Pagination buttons will be inserted here -->
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+const pageSize = 10;
+
+// Initialize filters
+document.querySelectorAll('select').forEach(element => {
+    element.addEventListener('change', () => loadLeaderboard(1));
+});
+
+function loadLeaderboard(page) {
+    currentPage = page;
+    const filters = {
+        gameMode: document.getElementById('gameModeFilter').value,
+        period: document.getElementById('periodFilter').value,
+        sortBy: document.getElementById('sortFilter').value,
+        page,
+        pageSize
+    };
+
+    const queryString = new URLSearchParams(filters).toString();
+    fetch(`/api/leaderboard?${queryString}`)
+        .then(res => res.json())
+        .then(data => {
+            updateTable(data.players);
+            updatePagination(data.total);
+        });
+}
+
+function updateTable(players) {
+    const tbody = document.getElementById('leaderboardBody');
+    tbody.innerHTML = players.map((player, index) => {
+        const rank = (currentPage - 1) * pageSize + index + 1;
+        const winRate = ((player.wins / (player.wins + player.losses)) * 100).toFixed(1);
+        return `
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${rank}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${player.username}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${player.rating}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${player.wins}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${player.losses}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${winRate}%
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${player.wins + player.losses}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function updatePagination(total) {
+    const totalPages = Math.ceil(total / pageSize);
+    const start = (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, total);
+
+    document.getElementById('startRange').textContent = start;
+    document.getElementById('endRange').textContent = end;
+    document.getElementById('totalPlayers').textContent = total;
+
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+
+    // Previous button
+    pagination.appendChild(createPaginationButton('Previous', currentPage > 1, () => loadLeaderboard(currentPage - 1)));
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            pagination.appendChild(createPaginationButton(i, true, () => loadLeaderboard(i), i === currentPage));
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            pagination.appendChild(createPaginationButton('...', false));
+        }
+    }
+
+    // Next button
+    pagination.appendChild(createPaginationButton('Next', currentPage < totalPages, () => loadLeaderboard(currentPage + 1)));
+}
+
+function createPaginationButton(text, enabled, onClick, current = false) {
+    const button = document.createElement('button');
+    button.className = `relative inline-flex items-center px-4 py-2 border text-sm font-medium
+        ${current ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 
+        enabled ? 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50' : 
+        'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'}`;
+    button.textContent = text;
+    if (enabled && onClick) {
+        button.onclick = onClick;
+    }
+    return button;
+}
+
+// Initial load
+loadLeaderboard(1);
+</script>

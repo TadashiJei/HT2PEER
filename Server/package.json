@@ -1,0 +1,57 @@
+{
+  "name": "ht2peer-signaling",
+  "version": "1.0.0",
+  "description": "Advanced signaling server for HT2Peer WebRTC multiplayer",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "setup": "node scripts/setup.js",
+    "test": "jest",
+    "lint": "eslint src/",
+    "metrics": "node src/scripts/metrics.js",
+    "dashboard": "node src/dashboard/index.js",
+    "migrate": "knex migrate:latest",
+    "seed": "knex seed:run"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "chart.js": "^3.7.0",
+    "compression": "^1.7.4",
+    "connect-redis": "^8.0.1",
+    "connect-sqlite3": "^0.9.15",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "ejs": "^3.1.10",
+    "elo-rating": "^1.0.1",
+    "express": "^4.17.1",
+    "express-rate-limit": "^6.0.0",
+    "express-session": "^1.18.1",
+    "express-validator": "^6.15.0",
+    "helmet": "^4.6.0",
+    "ioredis": "^5.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "knex": "^0.95.15",
+    "node-schedule": "^2.1.0",
+    "pm2": "^5.1.2",
+    "prom-client": "^14.0.1",
+    "rate-limit-redis": "^3.0.0",
+    "redis": "^4.7.0",
+    "socket.io": "^4.4.1",
+    "socket.io-redis": "^6.1.1",
+    "sqlite3": "^5.1.7",
+    "uuid": "^8.3.2",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^4.7.1",
+    "ws": "^8.2.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.6.0",
+    "jest": "^27.4.7",
+    "nodemon": "^2.0.15",
+    "supertest": "^6.1.6"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

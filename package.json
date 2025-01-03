@@ -1,0 +1,34 @@
+{
+  "name": "com.ht2peer.webrtc-multiplayer",
+  "version": "1.0.0",
+  "displayName": "HT2Peer WebRTC Multiplayer",
+  "description": "A peer-to-peer multiplayer networking solution using WebRTC for Unity games",
+  "unity": "2020.3",
+  "dependencies": {
+    "com.unity.webrtc": "2.4.0"
+  },
+  "keywords": [
+    "webrtc",
+    "multiplayer",
+    "networking",
+    "p2p",
+    "peer-to-peer"
+  ],
+  "author": {
+    "name": "tadashijei",
+    "email": "hi@tadashijei.com",
+    "url": "https://tadashijei.com"
+  },
+  "samples": [
+    {
+      "displayName": "Basic Example",
+      "description": "Contains basic example of P2P connection",
+      "path": "Samples~/BasicExample"
+    },
+    {
+      "displayName": "Room Management",
+      "description": "Example of room management system",
+      "path": "Samples~/RoomManagement"
+    }
+  ]
+}
