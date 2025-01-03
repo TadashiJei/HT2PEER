@@ -44,8 +44,11 @@ router.use(session({
 // Middleware to ensure database is ready
 const requireDb = async (req, res, next) => {
     try {
-        await init(); // This will wait if the database is still initializing
-        req.db = getDb();
+        const db = getDb();
+        if (!db) {
+            throw new Error('Database not ready');
+        }
+        req.db = db;
         next();
     } catch (error) {
         console.error('Database not ready:', error);
@@ -62,10 +65,25 @@ router.use(requireDb);
 // Authentication middleware
 const requireAuth = (req, res, next) => {
     if (!req.session.userId) {
-        return res.redirect('/login');
+        return res.redirect('/dashboard/login');
     }
     next();
 };
+
+// Add user to all authenticated routes
+router.use(async (req, res, next) => {
+    if (req.session.userId) {
+        try {
+            const user = await req.db('users')
+                .where('id', req.session.userId)
+                .first();
+            res.locals.user = user;
+        } catch (error) {
+            console.error('Error fetching user:', error);
+        }
+    }
+    next();
+});
 
 // Routes
 router.get('/login', (req, res) => {
@@ -106,7 +124,10 @@ router.post('/login', [
         res.redirect('/dashboard');
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).render('login', { error: 'Internal server error' });
+        res.status(500).render('error', {
+            message: 'Error logging in',
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
     }
 });
 
@@ -127,47 +148,38 @@ router.get('/', (req, res) => {
 router.get('/dashboard', requireAuth, async (req, res) => {
     try {
         const db = req.db;
-        const [serverStats, recentMatches, activeUsers] = await Promise.all([
-            // Get server stats
-            db('server_stats')
-                .orderBy('timestamp', 'desc')
-                .first(),
-            
-            // Get recent matches
-            db('matches')
-                .join('match_players', 'matches.id', 'match_players.match_id')
-                .join('users', 'match_players.user_id', 'users.id')
-                .join('game_modes', 'matches.game_mode_id', 'game_modes.id')
-                .select(
-                    'matches.*',
-                    'game_modes.name as game_mode',
-                    db.raw('GROUP_CONCAT(users.username) as players')
-                )
+
+        // Get recent matches with player names
+        let recentMatches = [];
+        try {
+            recentMatches = await db('matches')
+                .select('matches.*', 'game_modes.name as game_mode')
+                .select(db.raw('GROUP_CONCAT(users.username) as players'))
+                .leftJoin('match_players', 'matches.id', 'match_players.match_id')
+                .leftJoin('users', 'match_players.user_id', 'users.id')
+                .leftJoin('game_modes', 'matches.game_mode_id', 'game_modes.id')
                 .groupBy('matches.id')
                 .orderBy('matches.created_at', 'desc')
-                .limit(5),
+                .limit(5);
+        } catch (error) {
+            console.error('Error fetching matches:', error);
+            recentMatches = [];
+        }
 
-            // Get active users
-            db('users')
-                .where('last_active', '>', db.raw('datetime("now", "-15 minutes")'))
-                .count('* as count')
-                .first()
-        ]);
-
-        const user = await db('users')
-            .where('id', req.session.userId)
-            .first();
+        // Get server stats
+        const stats = await getServerStats();
 
         res.render('dashboard', {
-            title: 'Dashboard',
-            user,
-            serverStats,
-            recentMatches,
-            activeUsers: activeUsers.count
+            user: res.locals.user,
+            stats,
+            recentMatches
         });
     } catch (error) {
         console.error('Dashboard error:', error);
-        res.status(500).render('error', { error: 'Error loading dashboard' });
+        res.render('error', {
+            message: 'Error loading dashboard',
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
     }
 });
 
@@ -180,7 +192,10 @@ router.get('/gamemodes', requireAuth, async (req, res) => {
         res.render('gamemodes', { gameModes });
     } catch (error) {
         console.error('Game modes error:', error);
-        res.render('error', { message: 'Error loading game modes' });
+        res.render('error', {
+            message: 'Error loading game modes',
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
     }
 });
 
@@ -248,7 +263,10 @@ router.get('/leaderboard', requireAuth, async (req, res) => {
         res.render('leaderboard', { gameModes });
     } catch (error) {
         console.error('Leaderboard error:', error);
-        res.render('error', { message: 'Error loading leaderboard' });
+        res.render('error', {
+            message: 'Error loading leaderboard',
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
     }
 });
 
@@ -333,7 +351,10 @@ router.get('/users', requireAuth, async (req, res) => {
         res.render('users');
     } catch (error) {
         console.error('Users page error:', error);
-        res.render('error', { message: 'Error loading users page' });
+        res.render('error', {
+            message: 'Error loading users page',
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
     }
 });
 

@@ -14,11 +14,21 @@ exports.up = function(knex) {
             table.increments('id').primary();
             table.string('room_id').notNullable();
             table.integer('host_id').references('id').inTable('users');
-            table.string('game_mode').notNullable();
+            table.integer('game_mode_id').references('id').inTable('game_modes');
             table.string('status').defaultTo('pending');
-            table.json('players');
             table.json('result');
             table.timestamps(true, true);
+        })
+        .createTable('match_players', table => {
+            table.increments('id').primary();
+            table.integer('match_id').references('id').inTable('matches').onDelete('CASCADE');
+            table.integer('user_id').references('id').inTable('users').onDelete('CASCADE');
+            table.string('status').defaultTo('joined');  // joined, ready, disconnected
+            table.json('stats');
+            table.timestamps(true, true);
+            
+            // Composite index for faster lookups
+            table.unique(['match_id', 'user_id']);
         })
         .createTable('match_history', table => {
             table.increments('id').primary();
@@ -94,6 +104,7 @@ exports.down = function(knex) {
         .dropTable('game_modes')
         .dropTable('leaderboard')
         .dropTable('match_history')
+        .dropTable('match_players')
         .dropTable('matches')
         .dropTable('users');
 };

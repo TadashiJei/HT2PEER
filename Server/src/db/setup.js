@@ -38,8 +38,7 @@ async function setupDatabase() {
         console.log('Creating admin user...');
         await db('users').insert({
             username: 'admin',
-            email: 'admin@example.com',
-            password_hash: '$2b$10$s4XK4mBwMHAhJD0AD3/5H.RXh8ZZqcEK0cqSJY1yBhqYhPyXEBvyO', // password: admin
+            password_hash: '$2b$10$wQFH6f71rOLO3a6mGERoteKTkC4AHk2RcMt4naIbC1J6RCDWZu/mC', // password: java69ers
             is_admin: true
         });
         console.log('Admin user created');

@@ -17,7 +17,8 @@
                     </div>
                 </div>
                 <div class="flex items-center">
-                    <a href="/logout" class="text-gray-500 hover:text-gray-700">Logout</a>
+                    <span class="text-gray-500 mr-4">Welcome, <%= user.username %></span>
+                    <a href="/dashboard/logout" class="text-gray-500 hover:text-gray-700">Logout</a>
                 </div>
             </div>
         </div>
@@ -33,56 +34,38 @@
                             Active Users
                         </dt>
                         <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                            <%= activeUsers %>
+                            <%= stats.activeUsers %>
                         </dd>
                     </div>
                 </div>
                 <div class="bg-white overflow-hidden shadow rounded-lg">
                     <div class="px-4 py-5 sm:p-6">
                         <dt class="text-sm font-medium text-gray-500 truncate">
-                            CPU Usage
+                            Total Users
                         </dt>
                         <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                            <%= serverStats ? (serverStats.cpu_usage * 100).toFixed(1) + '%' : '0%' %>
+                            <%= stats.totalUsers %>
                         </dd>
                     </div>
                 </div>
                 <div class="bg-white overflow-hidden shadow rounded-lg">
                     <div class="px-4 py-5 sm:p-6">
                         <dt class="text-sm font-medium text-gray-500 truncate">
-                            Memory Usage
+                            Active Matches
                         </dt>
                         <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                            <%= serverStats ? (serverStats.memory_usage * 100).toFixed(1) + '%' : '0%' %>
+                            <%= stats.activeMatches %>
                         </dd>
                     </div>
                 </div>
                 <div class="bg-white overflow-hidden shadow rounded-lg">
                     <div class="px-4 py-5 sm:p-6">
                         <dt class="text-sm font-medium text-gray-500 truncate">
-                            Uptime
+                            Total Matches
                         </dt>
-                        <dd class="mt-1 text-3xl font-semibold text-gray-900" id="uptime">
-                            Calculating...
+                        <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                            <%= stats.totalMatches %>
                         </dd>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="bg-white shadow rounded-lg mb-8">
-                <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <a href="/users" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                            Manage Users
-                        </a>
-                        <a href="/gamemodes" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
-                            Game Modes
-                        </a>
-                        <a href="/matches" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                            Match History
-                        </a>
                     </div>
                 </div>
             </div>
@@ -95,52 +78,40 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead>
                                 <tr>
-                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Game Mode</th>
-                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Players</th>
-                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
-                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Game Mode</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Players</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <% recentMatches.forEach(match => { %>
+                                <% if (recentMatches && recentMatches.length > 0) { %>
+                                    <% recentMatches.forEach(match => { %>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= match.game_mode %></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= match.players %></td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    <%= match.status === 'active' ? 'bg-green-100 text-green-800' : 
+                                                        match.status === 'completed' ? 'bg-blue-100 text-blue-800' : 
+                                                        'bg-gray-100 text-gray-800' %>">
+                                                    <%= match.status %>
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                <%= new Date(match.created_at).toLocaleString() %>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <%= new Date(match.created_at).toLocaleString() %>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <%= match.game_mode %>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <%= match.players %>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <%= match.duration %> min
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= match.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
-                                                <%= match.status %>
-                                            </span>
+                                        <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                            No matches found
                                         </td>
                                     </tr>
-                                <% }); %>
+                                <% } %>
                             </tbody>
                         </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Server Status -->
-            <div class="bg-white shadow rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Server Status</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <canvas id="cpuChart"></canvas>
-                        </div>
-                        <div>
-                            <canvas id="memoryChart"></canvas>
-                        </div>
                     </div>
                 </div>
             </div>
